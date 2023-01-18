@@ -40,6 +40,14 @@ static const struct amba_id coresight_ids[] = {
 	CS_AMBA_ID(0x000f0211), /* Qualcomm Kryo */
 	CS_AMBA_ID(0x000bb802), /* Qualcomm Kryo 385 Cortex-A55 */
 	CS_AMBA_ID(0x000bb803), /* Qualcomm Kryo 385 Cortex-A75 */
+	CS_AMBA_ID(0x0003b968),
+	CS_AMBA_ID(0x000bb908),
+	CS_AMBA_ID(0x000bb961),
+	CS_AMBA_ID(0x000bb962),
+	CS_AMBA_ID(0x000bb966),
+	CS_AMBA_ID(0x000bb968),
+	CS_AMBA_ID(0x000bb969),
+	CS_AMBA_ID(0x000bb999),
 	/* dynamic-replicator IDs */
 	{
 		.id = 0x000bb909,
