@@ -3381,6 +3381,11 @@ struct bpf_sock_ops {
 	__u64 bytes_received;
 	__u64 bytes_acked;
 	__bpf_md_ptr(struct bpf_sock *, sk);
+	// XIAOMI: Add by zhoulei8 --start
+	__u32 sk_uid;
+	__u32 voip_daddr;
+	__u32 voip_dport;
+	// XIAOMI: Add by zhoulei8 --end
 };
 
 /* Definitions for bpf_sock_ops_cb_flags */
@@ -3445,6 +3450,8 @@ enum {
 					 */
 	BPF_SOCK_OPS_RTT_CB,		/* Called on every RTT.
 					 */
+	// XIAOMI: Add by zhoulei8
+	BPF_SOCK_OPS_VOIP_CB,		/* Called on every udp states. */
 };
 
 /* List of TCP states. There is a build check in net/ipv4/tcp.c to detect
@@ -3466,7 +3473,7 @@ enum {
 	BPF_TCP_CLOSING,	/* Now a valid state */
 	BPF_TCP_NEW_SYN_RECV,
 
-	BPF_TCP_MAX_STATES	/* Leave at the end! */
+	BPF_TCP_MAX_STATES	/* Leave at the end! */	
 };
 
 #define TCP_BPF_IW		1001	/* Set TCP initial congestion window */
