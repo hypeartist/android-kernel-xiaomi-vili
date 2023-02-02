@@ -38,9 +38,12 @@
 #define BDF_FILE_NAME_PREFIX		"bdwlan"
 #define ELF_BDF_FILE_NAME		"bdwlan.elf"
 #define ELF_BDF_FILE_NAME_PREFIX	"bdwlan.e"
+
+
 #define BIN_BDF_FILE_NAME		"bdwlan.bin"
 #define BIN_BDF_FILE_NAME_PREFIX	"bdwlan.b"
 #define REGDB_FILE_NAME			"regdb.bin"
+#define REGDB_FILE_NAME_XIAOMI		"regdb_xiaomi.bin"
 #define DUMMY_BDF_FILE_NAME		"bdwlan.dmy"
 
 #define QDSS_TRACE_CONFIG_FILE "qdss_trace_config.cfg"
@@ -773,11 +776,12 @@ int icnss_qmi_get_dms_mac(struct icnss_priv *priv)
 		if (resp.resp.error == DMS_MAC_NOT_PROVISIONED) {
 			icnss_pr_err("NV MAC address is not provisioned");
 			priv->dms.nv_mac_not_prov = 1;
+			ret = -resp.resp.result;
 		} else {
 			icnss_pr_err("QMI_DMS_GET_MAC_ADDRESS_REQ_V01 failed, result: %d, err: %d\n",
 				     resp.resp.result, resp.resp.error);
+			ret = -EAGAIN;
 		}
-		ret = -resp.resp.result;
 		goto out;
 	}
 	if (!resp.mac_address_valid ||
@@ -960,7 +964,7 @@ static int icnss_get_bdf_file_name(struct icnss_priv *priv,
 				 priv->board_id & 0xFF);
 		break;
 	case ICNSS_BDF_REGDB:
-		snprintf(filename_tmp, filename_len, REGDB_FILE_NAME);
+		snprintf(filename_tmp, filename_len, REGDB_FILE_NAME_XIAOMI);
 		break;
 	case ICNSS_BDF_DUMMY:
 		icnss_pr_dbg("CNSS_BDF_DUMMY is set, sending dummy BDF\n");
