@@ -203,13 +203,13 @@
 #endif
 
 #ifdef MODULE
-#ifdef WLAN_WEAR_CHIPSET
-#define WLAN_MODULE_NAME  "wlan"
-#else
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
-#endif
+#else
+#ifdef MULTI_IF_NAME
+#define WLAN_MODULE_NAME  MULTI_IF_NAME
 #else
 #define WLAN_MODULE_NAME  "wlan"
+#endif
 #endif
 
 #ifdef TIMER_MANAGER
@@ -243,6 +243,11 @@ static unsigned int dev_num = 1;
 static struct cdev wlan_hdd_state_cdev;
 static struct class *class;
 static dev_t device;
+static bool hdd_loaded = false;
+
+// Hack qcacld-3.0 to work properly when built-in
+#define MODULE
+
 #ifndef MODULE
 static struct gwlan_loader *wlan_loader;
 static ssize_t wlan_boot_cb(struct kobject *kobj,
@@ -16780,6 +16785,8 @@ static void __hdd_inform_wifi_off(void)
 	ucfg_blm_wifi_off(hdd_ctx->pdev);
 }
 
+int hdd_driver_load(void);
+
 static void hdd_inform_wifi_off(void)
 {
 	int ret;
@@ -16868,6 +16875,13 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
 		pr_err("Invalid value received from framework");
 		goto exit;
+	}
+
+	if (!hdd_loaded) {
+		if (hdd_driver_load()) {
+			pr_err("%s: Failed to init hdd module\n", __func__);
+			goto exit;
+		}
 	}
 
 	hdd_info("is_driver_loaded %d is_driver_recovering %d",
@@ -17727,11 +17741,8 @@ int hdd_driver_load(void)
 
 	hdd_set_conparam(con_mode);
 
-	errno = wlan_hdd_state_ctrl_param_create();
-	if (errno) {
-		hdd_err("Failed to create ctrl param; errno:%d", errno);
-		goto wakelock_destroy;
-	}
+	WRITE_ONCE(hdd_loaded, true);
+	smp_wmb();
 
 	errno = pld_init();
 	if (errno) {
@@ -17776,8 +17787,6 @@ pld_deinit:
 		;
 param_destroy:
 	wlan_hdd_state_ctrl_param_destroy();
-wakelock_destroy:
-	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
 	hdd_component_deinit();
 hdd_deinit:
@@ -18024,10 +18033,13 @@ static int hdd_module_init(void)
 #else
 static int hdd_module_init(void)
 {
-	if (hdd_driver_load())
-		return -EINVAL;
+	int ret;
 
-	return 0;
+	ret = wlan_hdd_state_ctrl_param_create();
+	if (ret)
+		pr_err("wlan_hdd_state_create:%x\n", ret);
+
+	return ret;
 }
 #endif
 #else
