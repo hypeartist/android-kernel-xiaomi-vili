@@ -153,12 +153,6 @@ static void cam_csiphy_prgm_cmn_data(
 		csiphybase = g_phy_data[csiphy_idx].base_address;
 		is_3phase = g_phy_data[csiphy_idx].is_3phase;
 
-		if (!csiphybase) {
-			CAM_DBG(CAM_CSIPHY, "CSIPHY: %d is not available in platform",
-				csiphy_idx);
-			continue;
-		}
-
 		for (i = 0; i < size; i++) {
 			csiphy_common_reg =
 				&csiphy_dev->ctrl_reg->csiphy_common_reg[i];
@@ -960,7 +954,8 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 		cam_csiphy_reset(csiphy_dev);
 		cam_soc_util_disable_platform_resource(soc_info, true, true);
 
-		cam_cpas_stop(csiphy_dev->cpas_handle);
+		//deleted by xiaomi
+		//cam_cpas_stop(csiphy_dev->cpas_handle);
 		csiphy_dev->csiphy_state = CAM_CSIPHY_ACQUIRE;
 	}
 
@@ -976,6 +971,8 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 		}
 	}
 
+	// xiaomi: force stop cpas
+	cam_cpas_stop(csiphy_dev->cpas_handle);
 	csiphy_dev->ref_count = 0;
 	csiphy_dev->acquire_count = 0;
 	csiphy_dev->start_dev_count = 0;

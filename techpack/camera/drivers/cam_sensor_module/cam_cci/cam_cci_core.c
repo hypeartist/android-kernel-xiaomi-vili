@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -986,7 +986,6 @@ static int32_t cam_cci_burst_read(struct v4l2_subdev *sd,
 	}
 
 	mutex_lock(&cci_dev->cci_master_info[master].mutex_q[queue]);
-	cci_dev->is_burst_read[master] = true;
 	reinit_completion(&cci_dev->cci_master_info[master].report_q[queue]);
 
 	soc_info = &cci_dev->soc_info;
@@ -1119,53 +1118,46 @@ static int32_t cam_cci_burst_read(struct v4l2_subdev *sd,
 			goto rel_mutex_q;
 		}
 
-		while (true) {
-			read_words = cam_io_r_mb(base +
-				CCI_I2C_M0_READ_BUF_LEVEL_ADDR +
-				master * 0x100);
-			if (read_words <= 0) {
-				CAM_DBG(CAM_CCI, "FIFO Buffer lvl is 0");
-				break;
-			}
-
-			j++;
-			CAM_DBG(CAM_CCI, "Iteration: %u read_words %d",
-				j, read_words);
-
-			total_read_words += read_words;
-			while (read_words > 0) {
-				val = cam_io_r_mb(base +
-					CCI_I2C_M0_READ_DATA_ADDR +
-					master * 0x100);
-				for (i = 0; (i < 4) &&
-					(index < read_cfg->num_byte); i++) {
-					CAM_DBG(CAM_CCI, "i:%d index:%d",
-						i, index);
-					if (!first_byte) {
-						CAM_DBG(CAM_CCI, "sid 0x%x",
-							val & 0xFF);
-						first_byte++;
-					} else {
-						read_cfg->data[index] =
-							(val  >> (i * 8)) & 0xFF;
-						CAM_DBG(CAM_CCI, "data[%d] 0x%x",
-							index,
-							read_cfg->data[index]);
-						index++;
-					}
-				}
-				read_words--;
-			}
-
-			CAM_DBG(CAM_CCI,
-				"Iteration:%u total_read_words %d",
-				j, total_read_words);
+		read_words = cam_io_r_mb(base +
+			CCI_I2C_M0_READ_BUF_LEVEL_ADDR + master * 0x100);
+		if (read_words <= 0) {
+			CAM_DBG(CAM_CCI, "FIFO Buffer lvl is 0");
+			continue;
 		}
+
+		j++;
+		CAM_DBG(CAM_CCI, "Iteration: %u read_words %d", j, read_words);
+
+		total_read_words += read_words;
+		while (read_words > 0) {
+			val = cam_io_r_mb(base +
+				CCI_I2C_M0_READ_DATA_ADDR + master * 0x100);
+			for (i = 0; (i < 4) &&
+				(index < read_cfg->num_byte); i++) {
+				CAM_DBG(CAM_CCI, "i:%d index:%d", i, index);
+				if (!first_byte) {
+					CAM_DBG(CAM_CCI, "sid 0x%x",
+						val & 0xFF);
+					first_byte++;
+				} else {
+					read_cfg->data[index] =
+						(val  >> (i * 8)) & 0xFF;
+					CAM_DBG(CAM_CCI, "data[%d] 0x%x", index,
+						read_cfg->data[index]);
+					index++;
+				}
+			}
+			read_words--;
+		}
+
+		CAM_DBG(CAM_CCI, "Iteraion:%u total_read_words %d",
+			j, total_read_words);
 
 		spin_lock_irqsave(&cci_dev->lock_status, flags);
 		if (cci_dev->irqs_disabled) {
 			irq_mask_update =
-				cam_io_r_mb(base + CCI_IRQ_MASK_1_ADDR);
+				cam_io_r_mb(base + CCI_IRQ_MASK_1_ADDR) |
+				CCI_IRQ_STATUS_1_I2C_M0_RD_THRESHOLD;
 			if (master == MASTER_0 && cci_dev->irqs_disabled &
 				CCI_IRQ_STATUS_1_I2C_M0_RD_THRESHOLD)
 				irq_mask_update |=
@@ -1265,7 +1257,6 @@ static int32_t cam_cci_read(struct v4l2_subdev *sd,
 	}
 
 	mutex_lock(&cci_dev->cci_master_info[master].mutex_q[queue]);
-	cci_dev->is_burst_read[master] = false;
 	reinit_completion(&cci_dev->cci_master_info[master].report_q[queue]);
 
 	soc_info = &cci_dev->soc_info;
@@ -1634,7 +1625,7 @@ static int32_t cam_cci_read_bytes_v_1_2(struct v4l2_subdev *sd,
 		else
 			read_cfg->num_byte = read_bytes;
 
-		cci_dev->is_burst_read[master] = false;
+		cci_dev->is_burst_read = false;
 		rc = cam_cci_read(sd, c_ctrl);
 		if (rc) {
 			CAM_ERR(CAM_CCI, "failed to read rc:%d", rc);
@@ -1651,6 +1642,7 @@ static int32_t cam_cci_read_bytes_v_1_2(struct v4l2_subdev *sd,
 	} while (read_bytes);
 
 ERROR:
+	cci_dev->is_burst_read = false;
 	return rc;
 }
 
@@ -1715,8 +1707,10 @@ static int32_t cam_cci_read_bytes(struct v4l2_subdev *sd,
 			read_cfg->num_byte = read_bytes;
 
 		if (read_cfg->num_byte >= CCI_READ_MAX) {
+			cci_dev->is_burst_read = true;
 			rc = cam_cci_burst_read(sd, c_ctrl);
 		} else {
+			cci_dev->is_burst_read = false;
 			rc = cam_cci_read(sd, c_ctrl);
 		}
 		if (rc) {
@@ -1735,6 +1729,7 @@ static int32_t cam_cci_read_bytes(struct v4l2_subdev *sd,
 	} while (read_bytes);
 
 ERROR:
+	cci_dev->is_burst_read = false;
 	return rc;
 }
 

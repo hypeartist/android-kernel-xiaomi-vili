@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -27,9 +27,7 @@
 #include "cpastop_v580_custom.h"
 #include "cpastop_v540_100.h"
 #include "cpastop_v520_100.h"
-#include "cpastop_v520_110.h"
 #include "cpastop_v545_100.h"
-#include "cpastop_v545_110.h"
 #include "cpastop_v570_200.h"
 #include "cpastop_v680_100.h"
 #include "cpastop_v165_100.h"
@@ -103,7 +101,7 @@ static const uint32_t cam_cpas_hw_version_map
 	{
 		CAM_CPAS_TITAN_520_V100,
 		0,
-		CAM_CPAS_TITAN_520_V110,
+		0,
 		0,
 		0,
 		0,
@@ -122,7 +120,7 @@ static const uint32_t cam_cpas_hw_version_map
 	{
 		CAM_CPAS_TITAN_545_V100,
 		0,
-		CAM_CPAS_TITAN_545_V110,
+		0,
 		0,
 		0,
 		0,
@@ -935,17 +933,9 @@ static int cam_cpastop_init_hw_version(struct cam_hw_info *cpas_hw,
 		camnoc_info = &cam520_cpas100_camnoc_info;
 		qchannel_info = &cam520_cpas100_qchannel_info;
 		break;
-	case CAM_CPAS_TITAN_520_V110:
-		camnoc_info = &cam520_cpas110_camnoc_info;
-		qchannel_info = &cam520_cpas110_qchannel_info;
-		break;
 	case CAM_CPAS_TITAN_545_V100:
 		camnoc_info = &cam545_cpas100_camnoc_info;
 		qchannel_info = &cam545_cpas100_qchannel_info;
-		break;
-	case CAM_CPAS_TITAN_545_V110:
-		camnoc_info = &cam545_cpas110_camnoc_info;
-		qchannel_info = &cam545_cpas110_qchannel_info;
 		break;
 	case CAM_CPAS_TITAN_570_V200:
 		camnoc_info = &cam570_cpas200_camnoc_info;

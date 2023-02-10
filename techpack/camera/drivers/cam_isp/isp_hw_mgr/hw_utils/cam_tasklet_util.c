@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -12,7 +12,6 @@
 #include "cam_irq_controller.h"
 #include "cam_debug_util.h"
 #include "cam_common_util.h"
-
 
 /* Threshold for scheduling delay in ms */
 #define CAM_TASKLET_SCHED_TIME_THRESHOLD        5
@@ -286,7 +285,7 @@ int cam_tasklet_start(void  *tasklet_info)
 	struct cam_tasklet_info       *tasklet = tasklet_info;
 	int i = 0;
 
-	if (atomic_read(&tasklet->tasklet_active)) {
+	if (atomic_cmpxchg(&tasklet->tasklet_active, 0, 1)) {
 		CAM_ERR(CAM_ISP, "Tasklet already active idx:%d",
 			tasklet->index);
 		return -EBUSY;
@@ -299,8 +298,6 @@ int cam_tasklet_start(void  *tasklet_info)
 			&tasklet->free_cmd_list);
 	}
 
-	atomic_set(&tasklet->tasklet_active, 1);
-
 	tasklet_enable(&tasklet->tasklet);
 
 	return 0;
@@ -310,10 +307,9 @@ void cam_tasklet_stop(void  *tasklet_info)
 {
 	struct cam_tasklet_info  *tasklet = tasklet_info;
 
-	if (!atomic_read(&tasklet->tasklet_active))
+	if (!atomic_cmpxchg(&tasklet->tasklet_active, 1, 0))
 		return;
 
-	atomic_set(&tasklet->tasklet_active, 0);
 	tasklet_kill(&tasklet->tasklet);
 	tasklet_disable(&tasklet->tasklet);
 	cam_tasklet_flush(tasklet);
@@ -351,6 +347,7 @@ static void cam_tasklet_action(unsigned long data)
 			"Tasklet execution",
 			curr_time,
 			CAM_TASKLET_EXE_TIME_THRESHOLD);
+
 		cam_tasklet_put_cmd(tasklet_info, (void **)(&tasklet_cmd));
 	}
 }

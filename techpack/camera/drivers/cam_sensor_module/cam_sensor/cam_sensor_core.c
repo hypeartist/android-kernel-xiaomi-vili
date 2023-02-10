@@ -688,8 +688,7 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 	rc = camera_io_dev_read(
 		&(s_ctrl->io_master_info),
 		slave_info->sensor_id_reg_addr,
-		&chipid,
-		s_ctrl->sensor_probe_addr_type,
+		&chipid,  s_ctrl->sensor_probe_addr_type,
 		s_ctrl->sensor_probe_data_type);
 
 	CAM_DBG(CAM_SENSOR, "read id: 0x%x expected id 0x%x:",
@@ -1324,15 +1323,24 @@ int cam_sensor_apply_settings(struct cam_sensor_ctrl_t *s_ctrl,
 			i2c_set[offset].request_id == req_id) {
 			list_for_each_entry(i2c_list,
 				&(i2c_set[offset].list_head), list) {
-				rc = cam_sensor_i2c_modes_util(
-					&(s_ctrl->io_master_info),
-					i2c_list);
-				if (rc < 0) {
-					CAM_ERR(CAM_SENSOR,
-						"Failed to apply settings: %d",
-						rc);
-					return rc;
-				}
+                    rc = cam_sensor_i2c_modes_util(
+                        &(s_ctrl->io_master_info),
+                        i2c_list);
+                    if (rc < 0) {
+                        CAM_ERR(CAM_SENSOR,
+                                "Failed to apply settings: %d",
+                                rc);
+                        msleep(20);
+                        rc = cam_sensor_i2c_modes_util(
+                            &(s_ctrl->io_master_info),
+                            i2c_list);
+                        if(rc < 0 ) {
+                            CAM_ERR(CAM_SENSOR,
+                                    "retry Failed to apply settings: %d",
+                                    rc);
+                            return rc;
+                        }
+                    }
 			}
 			CAM_DBG(CAM_SENSOR, "applied req_id: %llu", req_id);
 		} else {

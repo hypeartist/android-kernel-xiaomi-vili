@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _CAM_ISP_CONTEXT_H_
@@ -273,6 +273,7 @@ struct cam_isp_context_event_record {
  * @workq:                     Worker thread for offline ife
  * @trigger_id:                ID provided by CRM for each ctx on the link
  * @last_bufdone_err_apply_req_id:  last bufdone error apply request id
+ * @deferred_reg_upd: Indicate whether HW has a deferred reg upd
  *
  */
 struct cam_isp_context {
@@ -320,6 +321,7 @@ struct cam_isp_context {
 	struct cam_req_mgr_core_workq        *workq;
 	int32_t                               trigger_id;
 	int64_t                               last_bufdone_err_apply_req_id;
+	atomic_t                              deferred_reg_upd;
 };
 
 /**
@@ -364,16 +366,5 @@ int cam_isp_context_init(struct cam_isp_context *ctx,
  */
 int cam_isp_context_deinit(struct cam_isp_context *ctx);
 
-/**
- * cam_isp_subdev_close_internal()
- *
- * @brief:              Close function for the isp dev
- *
- * @sd:                 Pointer to struct v4l2_subdev
- * @fh:                 Pointer to struct v4l2_subdev_fh
- *
- */
-int cam_isp_subdev_close_internal(struct v4l2_subdev *sd,
-	struct v4l2_subdev_fh *fh);
 
 #endif  /* __CAM_ISP_CONTEXT_H__ */
