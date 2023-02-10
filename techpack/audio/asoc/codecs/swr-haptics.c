@@ -15,6 +15,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 
+
 #define HAPTICS_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 		SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
 		SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
@@ -59,7 +60,7 @@ static struct reg_default swr_hap_reg_defaults[] = {
 	{AUTO_RES_CAL_DONE_REG, 0},
 	{SWR_READ_DATA_REG, 0},
 	{SWR_PLAY_REG, 4},
-	{SWR_VMAX_REG, 0},
+	{SWR_VMAX_REG, 100},
 };
 
 enum {
@@ -94,6 +95,8 @@ struct swr_haptics_dev {
 	u8				vmax;
 	u8				flags;
 };
+
+
 
 static bool swr_hap_volatile_register(struct device *dev, unsigned int reg)
 {
@@ -299,6 +302,7 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 
 		swr_slvdev_datapath_control(swr_hap->swr_slave,
 				swr_hap->swr_slave->dev_num, true);
+
 		/* trigger SWR play */
 		val = SWR_PLAY_BIT | SWR_PLAY_SRC_VAL_SWR;
 		rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
@@ -376,7 +380,8 @@ static const struct snd_kcontrol_new haptics_snd_controls[] = {
 };
 
 static const struct snd_soc_dapm_widget haptics_comp_dapm_widgets[] = {
-	SND_SOC_DAPM_INPUT("HAP_IN"),
+	SND_SOC_DAPM_AIF_IN("HAP_IN", "HAPTICS_AIF Playback", 0,
+				SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_MIXER_E("SWR DAC_Port", SND_SOC_NOPM, 0, 0,
 			hap_swr_dac_port, ARRAY_SIZE(hap_swr_dac_port),
 			hap_enable_swr_dac_port,

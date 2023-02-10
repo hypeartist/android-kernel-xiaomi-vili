@@ -663,6 +663,7 @@ enum {
 	EXT_EC_REF_SLIM_1_TX,
 	EXT_EC_REF_PRI_TDM_TX,
 	EXT_EC_REF_SEC_TDM_TX,
+	EXT_EC_REF_TERT_TDM_TX,
 	EXT_EC_REF_SENARY_MI2S_TX,
 };
 
@@ -743,6 +744,7 @@ struct msm_pcm_stream_app_type_cfg {
 	int sample_rate;
 	uint32_t copp_token;
 	int bit_width;
+	int channel;
 };
 
 /* dai_id: front-end ID,
