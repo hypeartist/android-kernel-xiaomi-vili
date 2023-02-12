@@ -1405,8 +1405,8 @@ static struct msm_vidc_common_data yupik_common_data_v1[] = {
 	},
 	{
 		.key = "qcom,max-hw-load",
-		.value = 1224000,
-		/* UHD@30 decode + 1080p@30 encode */
+		.value = 1958400,
+		/* 3840x2176/256 MBs@60fps */
 	},
 	{
 		.key = "qcom,max-image-load",
