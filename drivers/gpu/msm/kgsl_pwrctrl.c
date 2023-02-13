@@ -513,6 +513,7 @@ static ssize_t __timer_store(struct device *dev, struct device_attribute *attr,
 					const char *buf, size_t count,
 					enum kgsl_pwrctrl_timer_type timer)
 {
+#if 0
 	unsigned int val = 0;
 	struct kgsl_device *device = dev_get_drvdata(dev);
 	int ret;
@@ -536,7 +537,7 @@ static ssize_t __timer_store(struct device *dev, struct device_attribute *attr,
 		device->pwrctrl.interval_timeout = val;
 
 	mutex_unlock(&device->mutex);
-
+#endif
 	return count;
 }
 
