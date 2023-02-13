@@ -166,6 +166,9 @@ static suspend_state_t decode_suspend_state(const char *buf, size_t n)
 static ssize_t mem_sleep_store(struct kobject *kobj, struct kobj_attribute *attr,
 			       const char *buf, size_t n)
 {
+#if 1
+	return n;
+#else
 	suspend_state_t state;
 	int error;
 
@@ -187,6 +190,7 @@ static ssize_t mem_sleep_store(struct kobject *kobj, struct kobj_attribute *attr
  out:
 	pm_autosleep_unlock();
 	return error ? error : n;
+#endif
 }
 
 power_attr(mem_sleep);
