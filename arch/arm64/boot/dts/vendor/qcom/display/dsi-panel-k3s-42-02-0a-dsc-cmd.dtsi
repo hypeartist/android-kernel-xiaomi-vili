@@ -265,6 +265,8 @@
 
 	/* IRQF_ONESHOT | IRQF_TRIGGER_RISING */
 	mi,esd-err-irq-gpio = <&tlmm 75 0x2001>;
+	qcom,ulps-enabled;
+	qcom,suspend-ulps-enabled;
 	qcom,esd-check-enabled;
 	qcom,esd-aod-check-enabled;
 	qcom,mdss-dsi-panel-status-check-mode = "reg_read";
